@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: renthome_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=renthome.settings
+    volumes:
+      - ./backend:/app
+      - backend_db:/app/db
+      - backend_media:/app/media
+      - backend_static:/app/static
+    ports:
+      - '8000:8000'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8000/api/houses/']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: renthome_bot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./bot:/app
+
+volumes:
+  backend_db:
+  backend_media:
+  backend_static:
