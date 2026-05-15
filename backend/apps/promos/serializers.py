@@ -18,5 +18,4 @@ class PromoCodeSerializer(serializers.ModelSerializer):
 
 
 class PromoCheckSerializer(serializers.Serializer):
-    """Bot uses this to validate a promo code before applying."""
     code = serializers.CharField()

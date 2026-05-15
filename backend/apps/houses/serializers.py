@@ -21,7 +21,6 @@ class ServiceSerializer(serializers.ModelSerializer):
 
 
 class HouseListSerializer(serializers.ModelSerializer):
-    """Compact serializer for list view."""
     tags = TagSerializer(many=True, read_only=True)
     first_photo = serializers.SerializerMethodField()
 
@@ -41,7 +40,6 @@ class HouseListSerializer(serializers.ModelSerializer):
 
 
 class HouseDetailSerializer(serializers.ModelSerializer):
-    """Full house card with all photos and services."""
     tags = TagSerializer(many=True, read_only=True)
     photos = HousePhotoSerializer(many=True, read_only=True)
     services = ServiceSerializer(many=True, read_only=True)

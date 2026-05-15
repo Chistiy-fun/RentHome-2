@@ -1,8 +1,3 @@
-"""
-Payment model. Tracks each individual payment transaction.
-Supports both mock (test) and real Telegram Payments.
-"""
-
 from django.db import models
 
 

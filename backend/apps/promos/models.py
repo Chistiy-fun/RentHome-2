@@ -1,5 +1,3 @@
-"""Promo code model for discounts."""
-
 from decimal import Decimal
 from django.db import models
 from django.utils import timezone
@@ -37,7 +35,6 @@ class PromoCode(models.Model):
         return f'{self.code} ({self.get_discount_type_display()}: {self.value})'
 
     def is_valid(self) -> bool:
-        """Check if promo is currently usable."""
         if not self.is_active:
             return False
         now = timezone.now()
@@ -50,7 +47,6 @@ class PromoCode(models.Model):
         return True
 
     def get_discount_amount(self, subtotal: Decimal) -> Decimal:
-        """Return discount amount for a given subtotal."""
         if self.discount_type == self.DiscountType.PERCENT:
             return (subtotal * self.value / 100).quantize(Decimal('0.01'))
         return min(self.value, subtotal)

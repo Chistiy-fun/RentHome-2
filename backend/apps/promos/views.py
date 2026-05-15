@@ -14,7 +14,6 @@ class PromoCodeViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='check')
     def check(self, request):
-        """Validate a promo code. Bot calls before checkout."""
         serializer = PromoCheckSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data['code']

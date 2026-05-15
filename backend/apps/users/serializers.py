@@ -21,7 +21,6 @@ class TelegramUserSerializer(serializers.ModelSerializer):
 
 
 class TelegramUserCreateSerializer(serializers.ModelSerializer):
-    """Used by bot when registering a new user via /start."""
 
     referral_code_used = serializers.CharField(write_only=True, required=False, allow_blank=True)
 

@@ -1,8 +1,3 @@
-"""
-Booking model with date-blocking logic.
-Status flow: pending → partially_paid → paid → (checked_in) → cancelled
-"""
-
 import random
 import string
 from decimal import Decimal
@@ -12,17 +7,11 @@ from django.core.exceptions import ValidationError
 
 
 def generate_access_code(length: int = 6) -> str:
-    """Generate a 6-character alphanumeric access code."""
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choices(chars, k=length))
 
 
 class Booking(models.Model):
-    """
-    Rental booking. Dates are blocked immediately upon creation (status=pending).
-    10% prepayment is required first; remaining paid on check-in.
-    """
-
     class Status(models.TextChoices):
         PENDING = 'pending', 'Ожидает оплаты'
         PARTIALLY_PAID = 'partially_paid', 'Предоплата внесена'
@@ -58,21 +47,21 @@ class Booking(models.Model):
         max_digits=5, decimal_places=2, default=0, verbose_name='Скидка (%)'
     )
 
-    # Services
+
     selected_services = models.ManyToManyField(
         'houses.Service', blank=True, verbose_name='Выбранные услуги'
     )
 
-    # Access
+
     access_code = models.CharField(
         max_length=10, blank=True, verbose_name='Код доступа'
     )
     is_checked_in = models.BooleanField(default=False, verbose_name='Заехал')
 
-    # Cancellation
+
     cancel_reason = models.TextField(blank=True, verbose_name='Причина отмены')
 
-    # Promo
+
     promo_code = models.ForeignKey(
         'promos.PromoCode', null=True, blank=True,
         on_delete=models.SET_NULL, verbose_name='Промокод'
@@ -89,7 +78,6 @@ class Booking(models.Model):
         return f'Бронь #{self.pk} | {self.user} | {self.house} | {self.start_date}–{self.end_date}'
 
     def clean(self) -> None:
-        """Validate no overlapping bookings for the same house."""
         if self.start_date >= self.end_date:
             raise ValidationError('Дата выезда должна быть позже даты заезда.')
 
@@ -104,7 +92,6 @@ class Booking(models.Model):
             raise ValidationError('Выбранные даты уже заняты. Пожалуйста, выберите другие даты.')
 
     def generate_access_code(self) -> str:
-        """Generate and save access code. Called after full payment."""
         self.access_code = generate_access_code()
         self.save(update_fields=['access_code'])
         return self.access_code

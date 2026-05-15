@@ -1,7 +1,3 @@
-"""
-Business logic for booking creation, pricing, and status transitions.
-"""
-
 from __future__ import annotations
 
 from decimal import Decimal
@@ -25,14 +21,10 @@ def calculate_booking_price(
     user: TelegramUser,
     promo_code: Optional[PromoCode] = None,
 ) -> dict:
-    """
-    Calculate total price for a booking including services and discounts.
-    Returns breakdown dict.
-    """
+
     days = (end_date - start_date).days
     base_price = Decimal(str(house.price_per_day)) * days
 
-    # Services cost
     services_cost = Decimal('0')
     services = Service.objects.filter(id__in=service_ids, house=house)
     for service in services:
@@ -43,18 +35,17 @@ def calculate_booking_price(
 
     subtotal = base_price + services_cost
 
-    # Determine discount
+
     discount_pct = Decimal('0')
 
-    # New user referral discount (25%, one-time)
+
     if user.referred_by and not user.new_user_discount_used:
         discount_pct = Decimal('25')
 
-    # Referrer cumulative discount
     elif user.discount_balance > 0:
         discount_pct = user.discount_balance
 
-    # Promo code discount overrides if better
+
     if promo_code and promo_code.is_valid():
         promo_discount = promo_code.get_discount_amount(subtotal)
         if promo_code.discount_type == 'percent':
@@ -64,7 +55,7 @@ def calculate_booking_price(
             else:
                 promo_discount_amount = subtotal * discount_pct / 100
         else:
-            # fixed discount — apply on top
+
             discount_amount = promo_discount
             total_price = subtotal - discount_amount
             prepayment = (total_price * Decimal('0.10')).quantize(Decimal('0.01'))
@@ -108,10 +99,7 @@ def create_booking(
     service_ids: List[int],
     promo_code_str: Optional[str] = None,
 ) -> Booking:
-    """
-    Create a new booking. Dates are blocked immediately.
-    Raises ValidationError on date conflicts or invalid data.
-    """
+
     house = House.objects.get(id=house_id, is_active=True)
 
     promo: Optional[PromoCode] = None
@@ -138,16 +126,14 @@ def create_booking(
         promo_code=promo,
     )
 
-    # Validate date overlaps
+
     booking.clean()
     booking.save()
 
-    # Attach services
     if service_ids:
         services = Service.objects.filter(id__in=service_ids, house=house)
         booking.selected_services.set(services)
 
-    # Mark promo as used
     if promo:
         promo.used_count += 1
         promo.save(update_fields=['used_count'])
@@ -157,7 +143,6 @@ def create_booking(
 
 @transaction.atomic
 def confirm_checkin(booking: Booking) -> Booking:
-    """User pressed 'Я на месте'. Mark check-in, trigger remaining payment."""
     if booking.status != Booking.Status.PARTIALLY_PAID:
         raise ValidationError('Заезд возможен только после внесения предоплаты.')
     booking.is_checked_in = True
@@ -167,27 +152,20 @@ def confirm_checkin(booking: Booking) -> Booking:
 
 @transaction.atomic
 def complete_booking_payment(booking: Booking) -> Booking:
-    """
-    Full payment received. Generate access code and update status to paid.
-    Also update user stats and referral discounts.
-    """
     booking.status = Booking.Status.PAID
     booking.save(update_fields=['status', 'updated_at'])
     booking.generate_access_code()
 
     user = booking.user
 
-    # Mark new-user referral discount as used
     if user.referred_by and not user.new_user_discount_used:
         user.new_user_discount_used = True
         user.save(update_fields=['new_user_discount_used'])
 
-    # Update user stats
     user.total_spent += booking.total_price
     user.total_bookings += 1
     user.save(update_fields=['total_spent', 'total_bookings'])
 
-    # Update referrer's cumulative discount
     from apps.users.services import apply_referral_discount_on_payment
     apply_referral_discount_on_payment(user)
 
@@ -196,7 +174,6 @@ def complete_booking_payment(booking: Booking) -> Booking:
 
 @transaction.atomic
 def cancel_booking(booking: Booking, reason: str = '', by_admin: bool = False) -> Booking:
-    """Cancel booking and free up the dates."""
     if booking.status == Booking.Status.CANCELLED:
         raise ValidationError('Бронирование уже отменено.')
     if booking.status == Booking.Status.PAID and not by_admin:

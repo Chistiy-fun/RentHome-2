@@ -31,7 +31,6 @@ class BookingAdmin(admin.ModelAdmin):
     colored_status.short_description = 'Статус'
 
     def admin_cancel_bookings(self, request, queryset):
-        """Bulk cancel action from admin panel."""
         from apps.bookings.services import cancel_booking
         cancelled = 0
         for booking in queryset.exclude(status='cancelled'):

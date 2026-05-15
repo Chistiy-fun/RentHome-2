@@ -1,8 +1,3 @@
-"""
-Aggregated API URLs for all apps.
-All bot-facing endpoints are prefixed with /api/
-"""
-
 from django.urls import path, include
 
 urlpatterns = [

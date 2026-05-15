@@ -36,7 +36,6 @@ class BookingDetailSerializer(serializers.ModelSerializer):
 
 
 class BookingCreateSerializer(serializers.Serializer):
-    """Input for creating a booking from the bot."""
     house_id = serializers.IntegerField()
     start_date = serializers.DateField()
     end_date = serializers.DateField()
@@ -53,7 +52,6 @@ class BookingCreateSerializer(serializers.Serializer):
 
 
 class PriceCalculateSerializer(serializers.Serializer):
-    """For price preview before booking confirmation."""
     house_id = serializers.IntegerField()
     start_date = serializers.DateField()
     end_date = serializers.DateField()

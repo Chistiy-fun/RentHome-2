@@ -1,8 +1,3 @@
-"""
-User API views.
-Bot authenticates via telegram_id header (X-Telegram-ID + X-Bot-Token).
-"""
-
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -14,8 +9,6 @@ from .services import get_or_create_user
 
 
 class TelegramUserViewSet(viewsets.ModelViewSet):
-    """CRUD for users. Bot uses telegram_id to look up users."""
-
     queryset = TelegramUser.objects.all()
     serializer_class = TelegramUserSerializer
 
@@ -28,10 +21,7 @@ class TelegramUserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_or_get_user(request):
-    """
-    Bot calls this on every /start.
-    Creates user if not exists, returns user data + auth token.
-    """
+
     telegram_id = request.data.get('telegram_id')
     username = request.data.get('username', '')
     full_name = request.data.get('full_name', '')
@@ -46,7 +36,6 @@ def register_or_get_user(request):
         full_name=full_name,
     )
 
-    # Handle referral on first creation
     if created and referral_code:
         from apps.users.models import TelegramUser as U
         try:
@@ -63,7 +52,6 @@ def register_or_get_user(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_user_by_telegram_id(request, telegram_id: int):
-    """Lookup user by Telegram ID. Used by bot for quick auth."""
     try:
         user = TelegramUser.objects.get(telegram_id=telegram_id)
         return Response(TelegramUserSerializer(user).data)

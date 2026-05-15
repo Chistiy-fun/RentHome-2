@@ -1,8 +1,3 @@
-"""
-Booking API views.
-Bot sends telegram_id as identifier; backend resolves to TelegramUser.
-"""
-
 from __future__ import annotations
 
 from typing import Optional
@@ -78,7 +73,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='calculate-price')
     def calculate_price(self, request):
-        """Preview price before creating booking."""
         serializer = PriceCalculateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         d = serializer.validated_data
@@ -130,7 +124,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='admin-cancel')
     def admin_cancel(self, request, pk=None):
-        """Admin cancels booking with reason (notifies user via bot)."""
         booking = self.get_object()
         reason = request.data.get('reason', 'Отменено администратором')
 
@@ -143,7 +136,6 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='checkin')
     def checkin(self, request, pk=None):
-        """User presses 'Я на месте' button."""
         booking = self.get_object()
         try:
             booking = confirm_checkin(booking)

@@ -1,10 +1,3 @@
-"""
-Payment processing logic.
-Handles prepayment (10%) and full payment flows.
-Guards against double payment.
-"""
-
-from decimal import Decimal
 from django.db import transaction
 from django.core.exceptions import ValidationError
 
@@ -14,14 +7,9 @@ from apps.bookings.models import Booking
 
 @transaction.atomic
 def process_prepayment(booking: Booking, telegram_payment_id: str = '') -> Payment:
-    """
-    Process the 10% prepayment for a booking.
-    Transitions booking: pending → partially_paid.
-    """
     if booking.status != Booking.Status.PENDING:
         raise ValidationError('Предоплата уже была внесена или бронирование недоступно.')
 
-    # Guard against double payment
     existing = Payment.objects.filter(
         booking=booking,
         payment_type=Payment.PaymentType.PREPAYMENT,
@@ -47,17 +35,11 @@ def process_prepayment(booking: Booking, telegram_payment_id: str = '') -> Payme
 
 @transaction.atomic
 def process_full_payment(booking: Booking, telegram_payment_id: str = '') -> Payment:
-    """
-    Process the remaining payment after check-in.
-    Transitions booking: partially_paid → paid.
-    Generates access code.
-    """
     if booking.status != Booking.Status.PARTIALLY_PAID:
         raise ValidationError('Бронирование должно быть в статусе "предоплата внесена".')
     if not booking.is_checked_in:
         raise ValidationError('Пользователь ещё не отметился на месте.')
 
-    # Guard against double payment
     existing = Payment.objects.filter(
         booking=booking,
         payment_type=Payment.PaymentType.FULL_PAYMENT,
@@ -75,7 +57,6 @@ def process_full_payment(booking: Booking, telegram_payment_id: str = '') -> Pay
         telegram_payment_id=telegram_payment_id,
     )
 
-    # Complete booking and generate access code
     from apps.bookings.services import complete_booking_payment
     complete_booking_payment(booking)
 
@@ -83,10 +64,6 @@ def process_full_payment(booking: Booking, telegram_payment_id: str = '') -> Pay
 
 
 def create_pending_payment(booking: Booking, payment_type: str) -> Payment:
-    """
-    Create a pending payment record before Telegram payment is confirmed.
-    Used to track initiated but not yet confirmed payments.
-    """
     amount = (
         booking.prepayment_amount
         if payment_type == Payment.PaymentType.PREPAYMENT

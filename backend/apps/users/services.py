@@ -1,7 +1,3 @@
-"""
-Business logic for user registration and referral handling.
-"""
-
 from __future__ import annotations
 
 import secrets
@@ -11,11 +7,6 @@ from apps.users.models import TelegramUser
 
 
 def register_user(data: dict, referral_code: Optional[str] = None) -> TelegramUser:
-    """
-    Register a new Telegram user.
-    If referral_code is provided and valid — link the referrer.
-    New user gets 25% one-time discount recorded.
-    """
     referrer: Optional[TelegramUser] = None
     if referral_code:
         try:
@@ -23,7 +14,6 @@ def register_user(data: dict, referral_code: Optional[str] = None) -> TelegramUs
         except TelegramUser.DoesNotExist:
             pass
 
-    # Generate API token for bot↔backend auth
     token = secrets.token_hex(32)
 
     user = TelegramUser.objects.create(
@@ -35,7 +25,6 @@ def register_user(data: dict, referral_code: Optional[str] = None) -> TelegramUs
 
 
 def get_or_create_user(telegram_id: int, username: str, full_name: str) -> Tuple[TelegramUser, bool]:
-    """Get existing user or create with defaults. Returns (user, created)."""
     try:
         user = TelegramUser.objects.get(telegram_id=telegram_id)
         return user, False
@@ -51,10 +40,6 @@ def get_or_create_user(telegram_id: int, username: str, full_name: str) -> Tuple
 
 
 def apply_referral_discount_on_payment(user: TelegramUser) -> None:
-    """
-    Update referrer's cumulative discount after user's successful payment.
-    Called once per successful payment.
-    """
     if not user.referred_by:
         return
     referrer = user.referred_by

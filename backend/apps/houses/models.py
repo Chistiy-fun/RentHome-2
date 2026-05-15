@@ -1,14 +1,7 @@
-"""
-House models — based on the existing RentHome/Tag/Gallery structure,
-extended with new fields required by the spec.
-"""
-
 from django.db import models
 
 
 class Tag(models.Model):
-    """Amenity/convenience tag for a house (e.g. WiFi, Pool)."""
-
     title = models.CharField(max_length=50, verbose_name='Название удобства')
     date_created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
@@ -21,11 +14,6 @@ class Tag(models.Model):
 
 
 class House(models.Model):
-    """
-    Rental house listing.
-    Preserves original RentHome fields and adds new required ones.
-    """
-
     title = models.CharField(max_length=100, verbose_name='Название дома')
     description = models.TextField(max_length=2000, verbose_name='Описание')
     price_per_day = models.DecimalField(
@@ -56,8 +44,6 @@ class House(models.Model):
 
 
 class HousePhoto(models.Model):
-    """Multiple photos per house (replaces old Gallery model)."""
-
     house = models.ForeignKey(
         House, on_delete=models.CASCADE,
         related_name='photos', verbose_name='Дом'
@@ -73,8 +59,6 @@ class HousePhoto(models.Model):
 
 
 class Service(models.Model):
-    """Additional service tied to a specific house."""
-
     house = models.ForeignKey(
         House, on_delete=models.CASCADE,
         related_name='services', verbose_name='Дом'

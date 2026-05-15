@@ -11,10 +11,6 @@ from .serializers import (
 
 
 class HouseViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Houses are read-only via API (managed through Django Admin).
-    Bot only needs to list and retrieve.
-    """
     queryset = House.objects.filter(is_active=True).prefetch_related('tags', 'photos', 'services')
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
@@ -27,17 +23,12 @@ class HouseViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'])
     def services(self, request, pk=None):
-        """Get all services for a specific house."""
         house = self.get_object()
         services = house.services.all()
         return Response(ServiceSerializer(services, many=True).data)
 
     @action(detail=True, methods=['get'])
     def availability(self, request, pk=None):
-        """
-        Return booked date ranges for this house.
-        Bot uses this to block unavailable dates in calendar.
-        """
         from apps.bookings.models import Booking
         house = self.get_object()
         bookings = Booking.objects.filter(

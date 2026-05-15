@@ -12,10 +12,6 @@ from .services import process_prepayment, process_full_payment
 
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    Payments are created via /process endpoint, not directly via POST.
-    Read-only list/retrieve for admin and bot history.
-    """
     permission_classes = [AllowAny]
     serializer_class = PaymentSerializer
 
@@ -28,10 +24,6 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='process')
     def process(self, request):
-        """
-        Bot calls this after receiving successful_payment update from Telegram.
-        Handles both prepayment and full payment.
-        """
         serializer = ProcessPaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         d = serializer.validated_data
@@ -41,7 +33,6 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         except Booking.DoesNotExist:
             return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Verify ownership
         if booking.user.telegram_id != d['telegram_id']:
             return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -59,7 +50,6 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         except DjangoValidationError as e:
             return Response({'error': str(e.message)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Refresh booking for response
         booking.refresh_from_db()
         return Response({
             'payment': PaymentSerializer(payment).data,

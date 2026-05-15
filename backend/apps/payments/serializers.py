@@ -17,7 +17,6 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class ProcessPaymentSerializer(serializers.Serializer):
-    """Input when bot confirms a Telegram payment."""
     booking_id = serializers.IntegerField()
     payment_type = serializers.ChoiceField(choices=['prepayment', 'full_payment'])
     telegram_payment_id = serializers.CharField(required=False, allow_blank=True)
