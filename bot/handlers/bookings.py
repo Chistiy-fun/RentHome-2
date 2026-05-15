@@ -1,7 +1,3 @@
-"""
-My bookings handler: list, view details, check-in, pay, cancel.
-"""
-
 import logging
 import os
 
@@ -18,7 +14,11 @@ from keyboards.keyboards import (
 router = Router()
 logger = logging.getLogger(__name__)
 
-PAYMENT_PROVIDER_TOKEN = os.environ.get('TELEGRAM_PAYMENT_PROVIDER_TOKEN', '')
+
+from dotenv import load_dotenv
+load_dotenv()
+
+PAYMENT_PROVIDER_TOKEN = os.getenv('TELEGRAM_PAYMENT_PROVIDER_TOKEN')
 MOCK_PAYMENTS = os.environ.get('MOCK_PAYMENTS', 'true').lower() == 'true'
 
 STATUS_EMOJI = {
@@ -162,13 +162,11 @@ async def pay_remaining(call: CallbackQuery) -> None:
 
 @router.pre_checkout_query()
 async def pre_checkout(pre_checkout_query: PreCheckoutQuery) -> None:
-    """Always confirm pre-checkout (validation happens on successful_payment)."""
     await pre_checkout_query.answer(ok=True)
 
 
 @router.message(F.successful_payment)
 async def successful_payment_handler(message: Message) -> None:
-    """Handle Telegram's successful_payment update."""
     payload = message.successful_payment.invoice_payload
     tg_payment_id = message.successful_payment.telegram_payment_charge_id
 

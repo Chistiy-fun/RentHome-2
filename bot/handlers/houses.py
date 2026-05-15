@@ -1,7 +1,3 @@
-"""
-House listing, house card, and full booking flow handler.
-"""
-
 import logging
 import math
 from datetime import datetime
@@ -130,7 +126,7 @@ async def _show_house(message, house_id: int) -> None:
         await message.answer(text, reply_markup=kb, parse_mode='HTML')
 
 
-# ── Booking FSM flow ──────────────────────────────────────────────────────────
+# ── Booking ──────────────────────────────────────────────────────────
 
 @router.message(BookingStates.waiting_start_date)
 async def receive_start_date(message: Message, state: FSMContext) -> None:
@@ -168,7 +164,6 @@ async def receive_end_date(message: Message, state: FSMContext) -> None:
 
     await state.update_data(end_date=dt.strftime('%Y-%m-%d'))
 
-    # Load house services for selection
     house = await api.get_house(data['house_id'])
     services = house.get('services', []) if house else []
 
@@ -249,7 +244,6 @@ async def skip_promo(call: CallbackQuery, state: FSMContext) -> None:
 async def _show_price_summary(message, state: FSMContext) -> None:
     data = await state.get_data()
 
-    # Get user telegram_id from message
     tg_id = message.chat.id
 
     pricing = await api.calculate_price(
@@ -266,7 +260,6 @@ async def _show_price_summary(message, state: FSMContext) -> None:
         await message.answer(f'❌ {err}')
         return
 
-    # Format dates for display
     start_display = data['start_date'].replace('-', '.')[8:] + '.' + data['start_date'][5:7] + '.' + data['start_date'][:4]
 
     text = (
@@ -287,9 +280,9 @@ async def _show_price_summary(message, state: FSMContext) -> None:
     await state.update_data(pricing=pricing)
     await state.set_state(BookingStates.confirming)
 
-    # We don't have booking_id yet; show confirm + create button
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
+
     builder = InlineKeyboardBuilder()
     builder.row(
         InlineKeyboardButton(text='✅ Подтвердить и забронировать', callback_data='confirm_create_booking'),

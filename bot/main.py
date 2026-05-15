@@ -1,12 +1,3 @@
-"""
-Bot entry point. Registers all routers and starts polling.
-Also launches the reminder background task via on_startup hook.
-
-aiogram 3.7 compatible:
-- DefaultBotProperties для parse_mode (Bot(parse_mode=...) устарело)
-- dp.startup.register() для фоновой задачи вместо asyncio.create_task до polling
-"""
-
 import asyncio
 import logging
 import os
@@ -20,8 +11,6 @@ from handlers import start, houses, bookings, support
 from services.notifications import run_reminder_loop
 from services.api import close_session
 
-from dotenv import load_dotenv
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,26 +18,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.environ.get('BOT_TOKEN', '')
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 
 async def on_startup(bot: Bot) -> None:
-    """Запускается сразу после старта polling — безопасное место для фоновых задач."""
-    logger.info('Bot started, launching reminder loop...')
+    """Запуск бота и запуск цикла с напоминаниями"""
+    logger.info('Бот запущен, запуск напоминаний...')
     asyncio.create_task(run_reminder_loop(bot))
 
 
 async def on_shutdown(bot: Bot) -> None:
-    """Корректно закрывает HTTP-сессию при остановке бота."""
-    logger.info('Bot stopping, closing HTTP session...')
+    """Остановка бота с закрытием HTTP сессии"""
+    logger.info('Бот остановлен, закрытие HTTP сессии...')
     await close_session()
 
 
 async def main() -> None:
     if not BOT_TOKEN:
-        raise RuntimeError('BOT_TOKEN environment variable is not set!')
+        raise RuntimeError('BOT_TOKEN не задан!')
 
-    # aiogram 3.7: parse_mode задаётся через DefaultBotProperties, НЕ в конструкторе Bot
     bot = Bot(
         token=BOT_TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
@@ -56,11 +44,10 @@ async def main() -> None:
 
     dp = Dispatcher(storage=MemoryStorage())
 
-    # Lifecycle hooks
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    # Регистрируем роутеры (порядок важен — более специфичные первыми)
+    # Регистрируем роутеры
     dp.include_router(start.router)
     dp.include_router(houses.router)
     dp.include_router(bookings.router)

@@ -1,7 +1,3 @@
-"""
-Finite State Machine states for multi-step booking flow.
-"""
-
 from aiogram.fsm.state import State, StatesGroup
 
 

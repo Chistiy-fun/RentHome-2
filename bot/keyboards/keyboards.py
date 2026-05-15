@@ -1,7 +1,3 @@
-"""
-All inline and reply keyboards for the bot.
-"""
-
 from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton,
     InlineKeyboardMarkup, InlineKeyboardButton,
@@ -48,7 +44,6 @@ def house_card_keyboard(house_id: int) -> InlineKeyboardMarkup:
 
 
 def services_keyboard(services: list, selected_ids: list) -> InlineKeyboardMarkup:
-    """Shows checkboxes for each service."""
     builder = InlineKeyboardBuilder()
     for svc in services:
         is_selected = svc['id'] in selected_ids
@@ -98,13 +93,11 @@ def booking_actions_keyboard(booking: dict) -> InlineKeyboardMarkup:
             callback_data=f'cancel_booking:{b_id}'
         ))
     elif status == 'partially_paid' and is_checked_in:
-        # Пользователь уже на месте — показываем кнопку оплаты остатка
         builder.row(InlineKeyboardButton(
             text='💳 Оплатить остаток',
             callback_data=f'pay_remaining:{b_id}'
         ))
     elif status == 'partially_paid':
-        # Предоплата внесена, но ещё не на месте
         builder.row(InlineKeyboardButton(
             text='📍 Я на месте',
             callback_data=f'checkin:{b_id}'
@@ -119,9 +112,10 @@ def booking_actions_keyboard(booking: dict) -> InlineKeyboardMarkup:
 
 def checkin_pay_keyboard(booking_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
+
     builder.row(InlineKeyboardButton(
-        text='💳 Оплатить остаток',
-        callback_data=f'pay_remaining:{booking_id}'
+        text='📍 Я на месте',
+        callback_data=f'checkin:{booking_id}'
     ))
     return builder.as_markup()
 

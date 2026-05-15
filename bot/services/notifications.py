@@ -1,11 +1,3 @@
-"""
-Notification helpers. Sends reminders and admin alerts.
-Reminder scheduler runs as a simple asyncio loop (no Celery needed).
-
-Important: reminder loop waits for backend availability (wait_for_backend)
-before making any requests, avoiding DNS/connection errors on startup.
-"""
-
 import asyncio
 import logging
 import os
@@ -17,15 +9,15 @@ import services.api as api
 
 logger = logging.getLogger(__name__)
 
-ADMIN_TG_ID = os.environ.get('ADMIN_TELEGRAM_ID', '')
+ADMIN_TG_ID = os.getenv('ADMIN_TELEGRAM_ID')
 
 
 async def notify_user(bot: Bot, telegram_id: int, text: str) -> None:
-    """Send a message to a user. Silently ignores failures."""
+    """ Отправка сообщения пользователю """
     try:
         await bot.send_message(chat_id=telegram_id, text=text, parse_mode='HTML')
     except Exception as e:
-        logger.warning('Failed to notify user %s: %s', telegram_id, e)
+        logger.warning('Ошибка отправки сообщения %s: %s', telegram_id, e)
 
 
 async def notify_admin(bot: Bot, text: str) -> None:
@@ -87,30 +79,25 @@ async def send_cancellation_notice(bot: Bot, telegram_id: int,
     await notify_user(bot, telegram_id, text)
 
 
-# ── Reminder scheduler ────────────────────────────────────────────────────────
+# ── Напоминания БЕТА ────────────────────────────────────────────────────────
 
 async def run_reminder_loop(bot_instance: Bot) -> None:
-    """
-    Waits for backend, then checks bookings every hour and sends reminders:
-    - 1 day before check-in
-    - on the day of check-in
-    """
     backend_up = await api.wait_for_backend(retries=20, delay=3.0)
     if not backend_up:
-        logger.error('Reminder loop aborted: backend never became available')
+        logger.error('Цикл прерван, сервер не доступен')
         return
 
-    logger.info('Reminder loop started')
+    logger.info('Старт цикла напоминаний')
     while True:
         try:
             await _check_and_send_reminders(bot_instance)
         except Exception as e:
-            logger.error('Reminder loop error: %s', e)
+            logger.error('Ошибка цикла: %s', e)
         await asyncio.sleep(3600)
 
 
 async def _check_and_send_reminders(bot_instance: Bot) -> None:
-    tomorrow = (date.today() + timedelta(days=1)).isoformat()
+    tomorrow = (date.today() + timedelta(seconds=10)).isoformat()
     today = date.today().isoformat()
 
     page = 1
@@ -131,13 +118,10 @@ async def _check_and_send_reminders(bot_instance: Bot) -> None:
             if start not in (tomorrow, today):
                 continue
 
-            # Get telegram_id from detailed booking view
             detail = await api.get_booking(booking['id'])
             if not detail:
                 continue
 
-            # The list serializer returns user as PK int, detail has the same.
-            # We need telegram_id — fetch the user object.
             user_data = await api._get(f'/users/{detail["user"]}/')
             if not user_data:
                 continue

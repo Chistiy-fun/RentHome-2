@@ -1,7 +1,3 @@
-"""
-/start handler and main menu routing.
-"""
-
 import os
 import logging
 
@@ -20,22 +16,17 @@ load_dotenv()
 router = Router()
 logger = logging.getLogger(__name__)
 
-BOT_USERNAME = os.environ.get('BOT_USERNAME')
+BOT_USERNAME = os.getenv('BOT_USERNAME')
 
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext) -> None:
-    """
-    Register user on /start.
-    Handles referral: /start ref_CODE
-    """
     await state.clear()
 
     args = message.text.split(maxsplit=1)
     referral_code = None
     if len(args) > 1 and args[1].startswith('ref_'):
-        referral_code = args[1][4:]  # Strip 'ref_' prefix
-
+        referral_code = args[1][4:]
 
     user_data = await api.register_or_get_user(
         telegram_id=message.from_user.id,
@@ -63,13 +54,6 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
     await message.answer(greeting, reply_markup=main_menu_keyboard(), parse_mode='HTML')
 
 
-
-
-
-
-
-
-
 @router.message(Command('menu'))
 @router.message(F.text == '◀️ Главное меню')
 async def cmd_menu(message: Message, state: FSMContext) -> None:
@@ -80,7 +64,6 @@ async def cmd_menu(message: Message, state: FSMContext) -> None:
 @router.message(Command('referral'))
 @router.message(F.text == '🔗 Моя реферальная ссылка')
 async def cmd_referral(message: Message) -> None:
-    """Show user's referral link and discount status."""
     user = await api.get_user(message.from_user.id)
     if not user:
         await message.answer('Сначала запустите бота командой /start')

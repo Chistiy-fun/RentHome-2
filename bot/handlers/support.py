@@ -1,7 +1,3 @@
-"""
-Support: user message → forwarded to admin Telegram ID.
-"""
-
 import os
 import logging
 
@@ -15,7 +11,10 @@ from keyboards.keyboards import main_menu_keyboard
 router = Router()
 logger = logging.getLogger(__name__)
 
-ADMIN_TG_ID = os.environ.get('ADMIN_TELEGRAM_ID', '')
+from dotenv import load_dotenv
+load_dotenv()
+
+ADMIN_TG_ID = os.getenv('ADMIN_TELEGRAM_ID')
 
 
 @router.message(F.text == 'ℹ️ Поддержка')
@@ -34,8 +33,6 @@ async def support_start(message: Message, state: FSMContext) -> None:
 async def receive_support_message(message: Message, state: FSMContext, bot: Bot) -> None:
     user = message.from_user
     await state.clear()
-
-    # Forward to admin
     if ADMIN_TG_ID:
         try:
             admin_text = (
@@ -46,7 +43,7 @@ async def receive_support_message(message: Message, state: FSMContext, bot: Bot)
             )
             await bot.send_message(int(ADMIN_TG_ID), admin_text, parse_mode='HTML')
         except Exception as e:
-            logger.error('Failed to forward to admin: %s', e)
+            logger.error('Ошибка отправки сообщения администратору: %s', e)
 
     await message.answer(
         '✅ Ваше сообщение отправлено! Мы ответим вам в ближайшее время.',
