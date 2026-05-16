@@ -114,8 +114,8 @@ def checkin_pay_keyboard(booking_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
 
     builder.row(InlineKeyboardButton(
-        text='📍 Я на месте',
-        callback_data=f'checkin:{booking_id}'
+        text='💳 Оплатить остаток',
+        callback_data=f'pay_remaining:{booking_id}'
     ))
     return builder.as_markup()
 
